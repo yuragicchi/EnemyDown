@@ -1,5 +1,6 @@
 package plugin.enemydown.command;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -14,6 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import plugin.enemydown.Main;
 import plugin.enemydown.data.PlayerScore;
 
 import java.util.*;
@@ -21,7 +23,13 @@ import java.util.*;
 //EnemyDownCommandクラスが CommandExecutor と Listener という2つのインタフェースを実装している
 public class EnemyDownCommand implements CommandExecutor, Listener {  //コマンドの実行とイベントのリスニングが可能になる。
 
+    private Main main;
     private List<PlayerScore> playerScoreList = new ArrayList<>();
+    private int gameTime = 20;
+
+    public EnemyDownCommand(Main main) {
+        this.main = main;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -36,11 +44,22 @@ public class EnemyDownCommand implements CommandExecutor, Listener {  //コマ�
                 }
             }
 
+            gameTime = 20;
             World world = player.getWorld();   //ワールドの情報を変数で定義
 
             initPlayerStatus(player);  //プレイヤーの初期状態を設定
 
-            world.spawnEntity(getEnemySpawnLocation(player, world), getEnemy());  //敵のスポーン位置と敵の種類を指定して敵をスポーンさせる
+            Bukkit.getScheduler().runTaskTimer(main, Runnable ->{
+                if(gameTime <= 0) {
+                    Runnable.cancel();
+                    player.sendMessage("ゲームが終了しました。");
+                    return;
+                }
+                world.spawnEntity(getEnemySpawnLocation(player, world), getEnemy());
+                gameTime -= 5;
+            },0,5*20);  //マイクラは20チップで1秒
+
+
         }
         return false;
     }
